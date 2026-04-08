@@ -45,8 +45,10 @@ def start_backend():
     if is_port_open(host, port): return True
     try:
         backend_cmd = f'"{sys.executable}" -m uvicorn backend.main:app --host {host} --port {port}'
-        # Redirect output to DEVNULL to avoid creating a log file
-        subprocess.Popen(backend_cmd, cwd=v_project_root, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, shell=True)
+        # Redirect output to backend_log.txt to capture startup errors
+        log_file_path = os.path.join(v_project_root, "backend_log.txt")
+        log_file = open(log_file_path, "w")
+        subprocess.Popen(backend_cmd, cwd=v_project_root, stdout=log_file, stderr=subprocess.STDOUT, shell=True)
         
         with st.status("🚀 Starting Backend...", expanded=False) as status:
             for _ in range(20):
@@ -63,6 +65,9 @@ if "backend_attempted" not in st.session_state:
     st.session_state.backend_attempted = True
     if not start_backend():
         st.error("⚠️ **SYSTEM CONFLICT**: Backend failed to initialize. Please check `backend_log.txt` or run uvicorn manually.")
+        if os.path.exists(os.path.join(v_project_root, "backend_log.txt")):
+            with open(os.path.join(v_project_root, "backend_log.txt"), "r") as f:
+                st.code(f.read() or "Log file is empty. Uvicorn script might not have executed at all.", language="text")
 
 # ── Module Imports ───────────────────────────────────────────────────
 try:
@@ -77,6 +82,11 @@ try:
     from query_service import fix_sql_query
 except Exception as e:
     st.error(f"FATAL SYNC ERROR: {e}")
+    st.write("### 🛠️ Deployment Debug Info")
+    st.write(f"**Current Working Directory:** `{os.getcwd()}`")
+    st.write(f"**Files in current directory:** `{os.listdir(os.getcwd())}`")
+    st.write(f"**Python Path (`sys.path`):** `{sys.path}`")
+    st.info("Check if the 'modules' folder exists in the list of files above. If it is missing or has a different capitalization (e.g. 'Modules'), that is causing the error. Make sure it is committed to GitHub!")
     st.stop()
 
 # ── Session State Initialization ─────────────────────────────────────
