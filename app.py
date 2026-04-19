@@ -321,7 +321,7 @@ def render_main_app():
         
         # Initialize multi-key state if not present
         if "api_keys_list" not in st.session_state:
-            st.session_state.api_keys_list = ["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"]
+            st.session_state.api_keys_list = ["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"]
             st.session_state.active_api_key_index = 0
             
         st.caption(f"API Keys ({len(st.session_state.api_keys_list)}/3)")
